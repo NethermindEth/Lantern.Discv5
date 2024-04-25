@@ -1,10 +1,11 @@
 using Lantern.Discv5.WireProtocol.Identity;
-using Lantern.Discv5.WireProtocol.Message.Requests;
-using Lantern.Discv5.WireProtocol.Message.Responses;
+using Lantern.Discv5.WireProtocol.Messages.Requests;
+using Lantern.Discv5.WireProtocol.Messages.Responses;
 using Lantern.Discv5.WireProtocol.Table;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Utilities.Encoders;
 
-namespace Lantern.Discv5.WireProtocol.Message;
+namespace Lantern.Discv5.WireProtocol.Messages;
 
 public class MessageRequester(IIdentityManager identityManager, IRequestManager requestManager,
         ILoggerFactory loggerFactory)
@@ -62,7 +63,7 @@ public class MessageRequester(IIdentityManager identityManager, IRequestManager 
             _logger.LogWarning("Failed to add pending request. Request id: {RequestId}", Convert.ToHexString(findNodesMessage.RequestId));
             return null;
         }
-
+        Console.WriteLine("FINDNODE req={0} node={1} target={2} ", Hex.ToHexString(findNodesMessage.RequestId.Take(8).ToArray()), Hex.ToHexString(destNodeId.Take(8).ToArray()), Hex.ToHexString(targetNodeId.Take(8).ToArray()));
         _logger.LogDebug("FindNode message constructed: {FindNodeMessage}", findNodesMessage.RequestId);
         return findNodesMessage.EncodeMessage();
     }

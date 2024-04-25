@@ -1,13 +1,13 @@
 using System.Net;
-using Lantern.Discv5.Enr;
 using Lantern.Discv5.WireProtocol.Identity;
-using Lantern.Discv5.WireProtocol.Message.Requests;
-using Lantern.Discv5.WireProtocol.Message.Responses;
+using Lantern.Discv5.WireProtocol.Messages.Requests;
+using Lantern.Discv5.WireProtocol.Messages.Responses;
 using Lantern.Discv5.WireProtocol.Packet;
 using Lantern.Discv5.WireProtocol.Table;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Utilities.Encoders;
 
-namespace Lantern.Discv5.WireProtocol.Message;
+namespace Lantern.Discv5.WireProtocol.Messages;
 
 public class MessageResponder(IIdentityManager identityManager,
         IRoutingTable routingTable,
@@ -133,7 +133,14 @@ public class MessageResponder(IIdentityManager identityManager,
         _logger.LogInformation("Received message type => {MessageType}", MessageType.Nodes);
         var decodedMessage = (NodesMessage)messageDecoder.DecodeMessage(message);
         var pendingRequest = GetPendingRequest(decodedMessage);
-    
+
+        foreach(var node in decodedMessage.Enrs)
+        {
+            Console.WriteLine("NODES req={0} node={1}",
+                Hex.ToHexString(decodedMessage.RequestId.Take(8).ToArray()),
+                Hex.ToHexString(node.NodeId.Take(8).ToArray()));
+        }
+
         if (pendingRequest == null)
         {
             _logger.LogWarning("Received NODES message with no pending request. Ignoring message");
@@ -181,10 +188,13 @@ public class MessageResponder(IIdentityManager identityManager,
             _logger.LogError(ex, "Error handling NODES message");
             return null;
         }
-        
-        await lookupManager.ContinueLookupAsync(receivedNodes, pendingRequest.NodeId, decodedMessage.Total);
-        packetReceiver.RaiseNodesResponseReceived(new NodesResponseEventArgs(decodedMessage.RequestId, receivedNodes));
-        
+
+        if (pendingRequest.ResponsesCount == decodedMessage.Total)
+        {
+            await lookupManager.ContinueLookupAsync(receivedNodes, pendingRequest.NodeId, decodedMessage.Total);
+            packetReceiver.RaiseNodesResponseReceived(new NodesResponseEventArgs(decodedMessage.RequestId, receivedNodes));
+        }
+
         return null;
     }
     
