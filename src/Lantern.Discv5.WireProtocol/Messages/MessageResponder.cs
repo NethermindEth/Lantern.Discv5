@@ -182,7 +182,7 @@ public class MessageResponder(IIdentityManager identityManager,
         }
         
         await lookupManager.ContinueLookupAsync(receivedNodes, pendingRequest.NodeId, decodedMessage.Total);
-        packetReceiver.RaiseNodesResponseReceived(new NodesResponseEventArgs(decodedMessage.RequestId, receivedNodes));
+        packetReceiver.RaiseNodesResponseReceived(new NodesResponseEventArgs(decodedMessage.RequestId, receivedNodes, pendingRequest.ResponsesCount == decodedMessage.Total));
         
         return null;
     }

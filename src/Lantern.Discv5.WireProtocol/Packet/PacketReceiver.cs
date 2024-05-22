@@ -64,6 +64,7 @@ public class PacketReceiver(IPacketManager packetManager,
         var message = messageDecoder.DecodeMessage(payload);
         var tcs = new TaskCompletionSource<IEnr[]>();
 
+        List<IEnr> res = new();
         NodesResponseReceived += HandleNodesResponse;
 
         var delayTask = Task.Delay(connectionOptions.ReceiveTimeoutMs);
@@ -76,13 +77,18 @@ public class PacketReceiver(IPacketManager packetManager,
         NodesResponseReceived -= HandleNodesResponse;
         return null;
 
+
         void HandleNodesResponse(object? sender, NodesResponseEventArgs e)
         {
             if (!e.RequestId.SequenceEqual(message.RequestId)) 
                 return;
-            
-            tcs.SetResult(e.Nodes.Select(entry => (IEnr)entry.Record).ToArray());
-            NodesResponseReceived -= HandleNodesResponse;
+            res.AddRange(e.Nodes.Select(entry => (IEnr)entry.Record));
+
+            if (e.Finished)
+            {
+                tcs.SetResult(res.ToArray());
+                NodesResponseReceived -= HandleNodesResponse;
+            }
         }
     }
 

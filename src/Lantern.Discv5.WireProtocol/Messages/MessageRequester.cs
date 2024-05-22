@@ -49,11 +49,23 @@ public class MessageRequester(IIdentityManager identityManager, IRequestManager 
     public byte[]? ConstructFindNodeMessage(byte[] destNodeId, byte[] targetNodeId)
     {
         var distance = TableUtility.Log2Distance(destNodeId, targetNodeId);
-        var distances = new[] { distance };
-        
+        List<int> distances = [distance];
+
+        for(var i =0; distances.Count < 3;)
+        {
+            if (distance + i <= 256)
+            {
+                distances.Add(distance + i);
+            }
+            if (distance - i > 0)
+            {
+                distances.Add(distance - i);
+            }
+        }
+
         _logger.LogInformation("Constructing message of type {MessageType} at distances {Distances}", MessageType.FindNode, string.Join(", ", distances.Select(d => d.ToString())));
 
-        var findNodesMessage = new FindNodeMessage(distances);
+        var findNodesMessage = new FindNodeMessage(distances.ToArray());
         var pendingRequest = new PendingRequest(destNodeId, findNodesMessage);
         var result = requestManager.AddPendingRequest(findNodesMessage.RequestId, pendingRequest);
 
