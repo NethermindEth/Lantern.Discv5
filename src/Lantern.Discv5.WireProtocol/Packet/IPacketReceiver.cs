@@ -8,10 +8,12 @@ public interface IPacketReceiver
 {
 
     Task<PongMessage?> SendPingAsync(IEnr dest);
-    
+
     Task<IEnr[]?> SendFindNodeAsync(IEnr dest, byte[] targetNodeId);
-    
+
+    Task<IEnr[]?> SendFindNodeAsync(IEnr dest, int[] distances);
+
     void RaisePongResponseReceived(PongResponseEventArgs e);
-    
+
     void RaiseNodesResponseReceived(NodesResponseEventArgs e);
 }

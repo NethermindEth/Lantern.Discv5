@@ -26,7 +26,7 @@ public class PacketManager(IPacketHandlerFactory packetHandlerFactory,
 {
     private readonly ILogger<PacketManager> _logger = loggerFactory.CreateLogger<PacketManager>();
 
-    public async Task<byte[]?> SendPacket(IEnr dest, MessageType messageType, params byte[][] args)
+    public async Task<byte[]?> SendPacket(IEnr dest, MessageType messageType, params object[] args)
     {
         var destNodeId = identityManager.Verifier.GetNodeIdFromRecord(dest);
         var destIpKey = dest.GetEntry<EntryIp>(EnrEntryKey.Ip);
@@ -60,7 +60,7 @@ public class PacketManager(IPacketHandlerFactory packetHandlerFactory,
         }
     }
 
-    private byte[]? ConstructMessage(bool sessionEstablished, MessageType messageType, byte[] destNodeId, byte[][] args)
+    private byte[]? ConstructMessage(bool sessionEstablished, MessageType messageType, byte[] destNodeId, object[] args)
     {
         return messageType switch
         {
@@ -68,14 +68,14 @@ public class PacketManager(IPacketHandlerFactory packetHandlerFactory,
                 ? messageRequester.ConstructPingMessage(destNodeId)
                 : messageRequester.ConstructCachedPingMessage(destNodeId),
             MessageType.FindNode => sessionEstablished
-                ? messageRequester.ConstructFindNodeMessage(destNodeId, args[0])
-                : messageRequester.ConstructCachedFindNodeMessage(destNodeId, args[0]),
+                ? messageRequester.ConstructFindNodeMessage(destNodeId, (int[])args[0])
+                : messageRequester.ConstructCachedFindNodeMessage(destNodeId, (int[])args[0]),
             MessageType.TalkReq => sessionEstablished
-                ? messageRequester.ConstructTalkReqMessage(destNodeId, args[0], args[1])
-                : messageRequester.ConstructCachedTalkReqMessage(destNodeId, args[0], args[1]),
+                ? messageRequester.ConstructTalkReqMessage(destNodeId, (byte[])args[0], (byte[])args[1])
+                : messageRequester.ConstructCachedTalkReqMessage(destNodeId, (byte[])args[0], (byte[])args[1]),
             MessageType.TalkResp => sessionEstablished
-                ? messageRequester.ConstructTalkRespMessage(destNodeId, args[0])
-                : messageRequester.ConstructCachedTalkRespMessage(destNodeId, args[0]),
+                ? messageRequester.ConstructTalkRespMessage(destNodeId, (byte[])args[0])
+                : messageRequester.ConstructCachedTalkRespMessage(destNodeId, (byte[])args[0]),
             _ => null
         };
     }
@@ -100,7 +100,7 @@ public class PacketManager(IPacketHandlerFactory packetHandlerFactory,
         byte[] destNodeId)
     {
         var maskingIv = RandomUtility.GenerateRandomData(PacketConstants.MaskingIvSize);
-        var ordinaryPacket = packetBuilder.BuildOrdinaryPacket(message,destNodeId, maskingIv, sessionMain.MessageCount);
+        var ordinaryPacket = packetBuilder.BuildOrdinaryPacket(message, destNodeId, maskingIv, sessionMain.MessageCount);
         var encryptedMessage = sessionMain.EncryptMessage(ordinaryPacket.Header, maskingIv, message);
         var finalPacket = ByteArrayUtils.JoinByteArrays(ordinaryPacket.Packet, encryptedMessage);
 

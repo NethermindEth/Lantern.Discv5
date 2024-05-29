@@ -3,12 +3,12 @@ namespace Lantern.Discv5.WireProtocol.Messages;
 public interface IMessageRequester
 {
     byte[]? ConstructPingMessage(byte[] destNodeId);
-    
+
     byte[]? ConstructCachedPingMessage(byte[] destNodeId);
 
-    byte[]? ConstructFindNodeMessage(byte[] destNodeId, byte[] targetNodeId);
-    
-    byte[]? ConstructCachedFindNodeMessage(byte[] destNodeId, byte[] targetNodeId);
+    byte[]? ConstructFindNodeMessage(byte[] destNodeId, int[] distances);
+
+    byte[]? ConstructCachedFindNodeMessage(byte[] destNodeId, int[] distances);
 
     byte[]? ConstructTalkReqMessage(byte[] destNodeId, byte[] protocol, byte[] request);
 
